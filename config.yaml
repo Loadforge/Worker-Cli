@@ -1,0 +1,5 @@
+name: Teste Local
+target: https://www.americanas.com.br/
+method: GET
+concurrency: 5
+duration: 30

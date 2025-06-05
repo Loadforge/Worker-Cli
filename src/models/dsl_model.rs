@@ -4,7 +4,7 @@ use serde::Deserialize;
 pub struct DslConfig {
     pub name: String,
     pub target: String,
-    pub method: String,
+    pub method: HttpMethod,
     pub concurrency: u64,
     pub duration: u64, 
 
@@ -13,6 +13,17 @@ pub struct DslConfig {
 
     #[serde(default)]
     pub auth: Option<Auth>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub enum HttpMethod {
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    HEAD,
+    OPTIONS,
 }
 
 #[derive(Debug, Deserialize, Clone)]

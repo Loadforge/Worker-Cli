@@ -1,0 +1,33 @@
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct DslConfig {
+    pub name: String,
+    pub target: String,
+    pub method: String,
+    pub concurrency: u64,
+    pub duration: u64, 
+
+    #[serde(default)]
+    pub body: Option<Body>,
+
+    #[serde(default)]
+    pub auth: Option<Auth>,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(tag = "type", content = "content")] 
+pub enum Body {
+    Json(serde_json::Value),  
+    Xml(String),       
+}
+
+#[derive(Debug, Deserialize, Clone)]
+#[serde(tag = "type", content = "credentials")]
+pub enum Auth {
+    None,
+    Basic { username: String, password: String },
+    Bearer { token: String },
+    ApiKey { key_name: String, key_value: String, in_header: bool }, 
+   
+}

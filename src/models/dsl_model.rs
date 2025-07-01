@@ -13,6 +13,9 @@ pub struct DslConfig {
 
     #[serde(default)]
     pub auth: Option<Auth>,
+
+    #[serde(default)]
+    pub query_params: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

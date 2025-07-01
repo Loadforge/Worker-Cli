@@ -1,0 +1,23 @@
+{
+  "name": "Teste Simples",
+  "target": "http://localhost:3000/task",
+  "method": "POST",
+  "concurrency": 36,
+  "duration": 100,
+  "query_params": {},
+  "body": {
+    "type": "Json",
+    "content": {
+      "user_id": "f8b46559-da5d-4360-8aa1-0ce29553a935",
+      "title": "new Task",
+      "description": "new Task",
+      "expirationDate": "21-02-2005"
+    }
+  },
+  "auth": {
+    "type": "Bearer",
+    "credentials": {
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGI0NjU1OS1kYTVkLTQzNjAtOGFhMS0wY2UyOTU1M2E5MzUiLCJ1c2VybmFtZSI6ImplYW4ubGltYSIsImlhdCI6MTc1MTQxMTQyOCwiZXhwIjoxNzUxNzcxNDI4fQ.XNVJqll7dckIIGBHo7B1pHiTv5d2bKXyPGJKONzea0c"
+    }
+  }
+}

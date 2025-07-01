@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct DslConfig {
@@ -6,7 +7,7 @@ pub struct DslConfig {
     pub target: String,
     pub method: HttpMethod,
     pub concurrency: u64,
-    pub duration: u64, 
+    pub duration: u64,
 
     #[serde(default)]
     pub body: Option<Body>,
@@ -19,6 +20,7 @@ pub struct DslConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+#[serde(rename_all = "UPPERCASE")]
 pub enum HttpMethod {
     GET,
     POST,
@@ -30,10 +32,10 @@ pub enum HttpMethod {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[serde(tag = "type", content = "content")] 
+#[serde(tag = "type", content = "content")]
 pub enum Body {
-    Json(serde_json::Value),  
-    Xml(String),       
+    Json(serde_json::Value),
+    Xml(String),
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -42,6 +44,5 @@ pub enum Auth {
     None,
     Basic { username: String, password: String },
     Bearer { token: String },
-    ApiKey { key_name: String, key_value: String, in_header: bool }, 
-   
+    ApiKey { key_name: String, key_value: String, in_header: bool },
 }

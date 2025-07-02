@@ -1,0 +1,1 @@
+cargo run --  --config test.json

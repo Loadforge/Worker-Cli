@@ -3,7 +3,7 @@
   "target": "http://localhost:3000/task",
   "method": "POST",
   "concurrency": 36,
-  "duration": 100,
+  "duration": 30,
   "query_params": {},
   "body": {
     "type": "Json",

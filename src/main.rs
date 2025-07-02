@@ -2,6 +2,7 @@ use clap::Parser;
 mod models;
 mod client;
 mod executor;
+mod ui;
 
 use models::dsl_model::DslConfig;
 use executor::run_load_test;

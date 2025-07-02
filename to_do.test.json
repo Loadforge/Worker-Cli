@@ -4,7 +4,7 @@
   "method": "POST",
   "concurrency": 36,
   "duration": 30,
-  "query_params": {},
+  "query_params": null,
   "body": {
     "type": "Json",
     "content": {

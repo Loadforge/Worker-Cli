@@ -6,43 +6,20 @@ use std::time::{Duration, Instant};
 
 pub fn show_loader(running: Arc<AtomicBool>, duration_secs: u64, start_time: Instant) {
     thread::spawn(move || {
-        let bar_length = 30;
-        let mut pos = 0;
-        let mut direction = 1;
-
         while running.load(Ordering::SeqCst) {
             let elapsed = start_time.elapsed().as_secs();
-            let remaining = if elapsed >= duration_secs {
-                0
-            } else {
-                duration_secs - elapsed
-            };
+            let remaining = duration_secs.saturating_sub(elapsed);
 
-            let mut bar = String::new();
-            for i in 0..bar_length {
-                if i == pos {
-                    bar.push_str("\x1b[44m \x1b[0m");
-                } else {
-                    bar.push(' ');
-                }
-            }
-
-            print!(
-                "\rExecutando teste... [{}] Tempo restante: {:02}s ",
-                bar, remaining
-            );
+            print!("\r⏱️  Tempo restante: {:02}s ", remaining);
             io::stdout().flush().unwrap();
 
-            if pos == bar_length - 1 {
-                direction = -1;
-            } else if pos == 0 {
-                direction = 1;
+            if remaining == 0 {
+                break;
             }
-            pos = (pos as i32 + direction) as usize;
 
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(500));
         }
 
-        println!("\rTeste finalizado.                            ");
+        println!("\n\x1b[1;92m✔️ Teste finalizado.\x1b[0m");
     });
 }

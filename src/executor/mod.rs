@@ -2,21 +2,26 @@ use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 use tokio::task;
+use hyper_tls::HttpsConnector;
 use hyper::Client;
+
+use crate::client::{send_request, HttpsClient};
 use crate::models::dsl_model::DslConfig;
 use crate::models::metrics::Metrics;
-use crate::client::send_request;
 use crate::ui::loader::show_loader;
 
 pub async fn run_load_test(config: DslConfig) {
-    let start_time = Instant::now();
-    let client = Arc::new(Client::new());
+    let https = HttpsConnector::new();
+    let client: HttpsClient = Client::builder().build::<_, hyper::Body>(https);
+    let client = Arc::new(client);
+
     let config = Arc::new(config);
     let metrics = Arc::new(Mutex::new(Metrics {
         fastest_response: f64::MAX,
         ..Default::default()
     }));
 
+    let start_time = Instant::now();
     let running = Arc::new(AtomicBool::new(true));
     let loader_flag = Arc::clone(&running);
     show_loader(loader_flag, config.duration, start_time);
@@ -27,15 +32,13 @@ pub async fn run_load_test(config: DslConfig) {
         let client = Arc::clone(&client);
         let config = Arc::clone(&config);
         let metrics = Arc::clone(&metrics);
+        let global_start = start_time.clone();
 
         let handle = task::spawn(async move {
-            let start_time = Instant::now();
-
-            while start_time.elapsed().as_secs() < config.duration {
+            while global_start.elapsed().as_secs() < config.duration {
                 let request_start = Instant::now();
-
                 let success = send_request(&client, &config).await.is_ok();
-                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0; // ms
+                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0; 
 
                 let mut m = metrics.lock().unwrap();
                 m.total_requests += 1;
@@ -64,7 +67,8 @@ pub async fn run_load_test(config: DslConfig) {
         let _ = handle.await;
     }
 
-    running.store(false, Ordering::SeqCst); 
+    running.store(false, Ordering::SeqCst);
+
     let final_metrics = metrics.lock().unwrap();
     let total_time_secs = config.duration as f64;
     let rps = final_metrics.total_requests as f64 / total_time_secs;

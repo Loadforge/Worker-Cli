@@ -1,0 +1,10 @@
+{
+  "name": "Teste ViaCEP",
+  "target": "https://viacep.com.br/ws/01001-000/json",
+  "method": "GET",
+  "concurrency": 36,
+  "duration": 30,
+  "query_params": null,
+  "body": null,
+  "auth": null
+}

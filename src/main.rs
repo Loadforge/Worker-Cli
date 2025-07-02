@@ -27,5 +27,4 @@ async fn main() {
 
     run_load_test(config).await;
 
-    println!("Teste de carga finalizado.");
 }

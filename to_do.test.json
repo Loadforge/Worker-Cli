@@ -2,8 +2,8 @@
   "name": "Teste Simples",
   "target": "http://localhost:3000/task",
   "method": "POST",
-  "concurrency": 36,
-  "duration": 30,
+  "concurrency": 6,
+  "duration": 5,
   "query_params": null,
   "body": {
     "type": "Json",

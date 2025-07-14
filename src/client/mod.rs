@@ -77,16 +77,41 @@ pub async fn send_request(
     let request = req_builder.body(body)?;
 
     let start = Instant::now();
-    let response = client.request(request).await?;
+
+    let result = client.request(request).await;
+
     let duration = start.elapsed();
 
-    println!(
-        "{} {} | {} {} ms",
-        "Status:".bold().green(),
-        format!("{}", response.status()).bold(),
-        "Time:".bold().blue(),
-        format!("{}", duration.as_millis()).bold()
-    );
+    match result {
+        Ok(response) => {
+            println!(
+                "{} {} {} {}",
+                "status :".green().bold(),
+                response.status().as_u16().to_string().bold(),
+                "| duration :".blue().bold(),
+                format!("{}ms", duration.as_millis()).bold(),
+            );
+            Ok(())
+        }
+        Err(e) => {
+            let error_reason = if e.is_connect() {
+                "Network Error (Connection refused or host unreachable)"
+            } else if e.is_timeout() {
+                "Network Error (Timeout)"
+            } else if e.is_closed() {
+                "Network Error (Connection closed unexpectedly)"
+            } else {
+                "Network Error (Unknown)"
+            };
 
-    Ok(())
+            eprintln!(
+                "{} {} {} {}",
+                "status :".red().bold(),
+                error_reason.red().bold(),
+                "| duration :".blue().bold(),
+                format!("{}ms", duration.as_millis()).bold(),
+            );
+            Err(Box::new(e))
+        }
+    }
 }

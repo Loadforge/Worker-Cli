@@ -84,7 +84,7 @@ pub async fn send_request(
         "{} {} | {} {} ms",
         "Status:".bold().green(),
         format!("{}", response.status()).bold(),
-        "Tempo:".bold().blue(),
+        "Time:".bold().blue(),
         format!("{}", duration.as_millis()).bold()
     );
 

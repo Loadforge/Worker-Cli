@@ -39,7 +39,7 @@ pub async fn run_load_test(config: DslConfig) {
             while global_start.elapsed().as_secs() < config.duration {
                 let request_start = Instant::now();
                 let success = send_request(&client, &config).await.is_ok();
-                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0; // em ms
+                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0; // in ms
 
                 {
                     let mut rt = response_times.lock().unwrap();
@@ -88,17 +88,18 @@ pub async fn run_load_test(config: DslConfig) {
     final_metrics.concurrency = config.concurrency;
     final_metrics.throughput = throughput;
     final_metrics.median_response_time = median;
-    final_metrics.timestamp = Utc::now().to_rfc3339();
+    final_metrics.timestamp = Utc::now().format("%Y/%m/%d %H:%M:%S").to_string();
 
     println!();
-    println!("\x1b[1;97;44m🔥 ======== RESULTADOS DO TESTE ======== 🔥\x1b[0m");
-    println!("\x1b[1;92m✅ Total de requisições         : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.total_requests);
-    println!("\x1b[1;92m✅ Requisições bem-sucedidas    : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.successful_requests);
-    println!("\x1b[1;91m❌ Requisições com erro         : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.failed_requests);
-    println!("\x1b[1;96m⚡ Resposta mais rápida (ms)    : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.fastest_response);
-    println!("\x1b[1;93m🐢 Resposta mais lenta (ms)     : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.slowest_response);
-    println!("\x1b[1;95m📊 Mediana das respostas (ms)   : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.median_response_time);
-    println!("\x1b[1;94m📈 Requisições por segundo (RPS): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.throughput);
+    println!("\x1b[1;97;44m🔥 ======== TEST RESULTS ======== 🔥\x1b[0m");
+    println!("\x1b[1;94m⏰ Timestamp                : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.timestamp);
+    println!("\x1b[1;92m✅ Total requests           : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.total_requests);
+    println!("\x1b[1;92m✅ Successful requests      : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.successful_requests);
+    println!("\x1b[1;91m❌ Failed requests          : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.failed_requests);
+    println!("\x1b[1;96m⚡ Fastest response (ms)    : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.fastest_response);
+    println!("\x1b[1;93m🐢 Slowest response (ms)    : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.slowest_response);
+    println!("\x1b[1;95m📊 Median response time (ms): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.median_response_time);
+    println!("\x1b[1;94m📈 Requests per second (RPS): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.throughput);
 }
 
 fn calculate_median(data: &[f64]) -> f64 {

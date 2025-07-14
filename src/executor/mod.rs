@@ -1,10 +1,11 @@
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Instant;
 use tokio::task;
 use hyper_tls::HttpsConnector;
 use hyper::Client;
-use chrono::Utc;
+use chrono::Local;
 
 use crate::client::{send_request, HttpsClient};
 use crate::models::dsl_model::DslConfig;
@@ -19,6 +20,7 @@ pub async fn run_load_test(config: DslConfig) {
     let metrics = Arc::new(Mutex::new(Metrics {
         fastest_response: f64::MAX,
         slowest_response: f64::MIN,
+        status_counts: HashMap::new(),
         ..Default::default()
     }));
 
@@ -38,8 +40,8 @@ pub async fn run_load_test(config: DslConfig) {
         let handle = task::spawn(async move {
             while global_start.elapsed().as_secs() < config.duration {
                 let request_start = Instant::now();
-                let success = send_request(&client, &config).await.is_ok();
-                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0; // in ms
+                let result = send_request(&client, &config).await;
+                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0;
 
                 {
                     let mut rt = response_times.lock().unwrap();
@@ -50,11 +52,18 @@ pub async fn run_load_test(config: DslConfig) {
                 m.total_requests += 1;
                 m.total_duration += elapsed;
 
-                if success {
-                    m.successful_requests += 1;
-                } else {
-                    m.failed_requests += 1;
-                }
+                let status_key = match result {
+                    Ok(status) => {
+                        m.successful_requests += 1;
+                        status.as_u16().to_string()
+                    }
+                    Err(_) => {
+                        m.failed_requests += 1;
+                        "NETWORK_ERROR".to_string()
+                    }
+                };
+
+                *m.status_counts.entry(status_key).or_insert(0) += 1;
 
                 if elapsed < m.fastest_response {
                     m.fastest_response = elapsed;
@@ -88,7 +97,7 @@ pub async fn run_load_test(config: DslConfig) {
     final_metrics.concurrency = config.concurrency;
     final_metrics.throughput = throughput;
     final_metrics.median_response_time = median;
-    final_metrics.timestamp = Utc::now().format("%Y/%m/%d %H:%M:%S").to_string();
+    final_metrics.timestamp = Local::now().format("%Y/%m/%d %H:%M:%S").to_string();
 
     println!();
     println!("\x1b[1;97;44m🔥 ======== TEST RESULTS ======== 🔥\x1b[0m");
@@ -100,6 +109,12 @@ pub async fn run_load_test(config: DslConfig) {
     println!("\x1b[1;93m🐢 Slowest response (ms)    : \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.slowest_response);
     println!("\x1b[1;95m📊 Median response time (ms): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.median_response_time);
     println!("\x1b[1;94m📈 Requests per second (RPS): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.throughput);
+
+    println!();
+    println!("\x1b[1;97;44m📦 ======== STATUS BREAKDOWN ========\x1b[0m");
+    for (status, count) in &final_metrics.status_counts {
+        println!("\x1b[1;97m• {}: {}\x1b[0m", status, count);
+    }
 }
 
 fn calculate_median(data: &[f64]) -> f64 {

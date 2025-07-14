@@ -1,4 +1,4 @@
-use hyper::{Client, Request, Body as HyperBody, Method, Uri};
+use hyper::{Client, Request, Body as HyperBody, Method, Uri, StatusCode};
 use hyper::header::{AUTHORIZATION, CONTENT_TYPE};
 use hyper_tls::HttpsConnector;
 use crate::models::dsl_model::{DslConfig, Body, Auth, HttpMethod};
@@ -6,15 +6,14 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use url::Url;
 use std::time::Instant;
-
-use colored::*; 
+use colored::*;
 
 pub type HttpsClient = Client<HttpsConnector<hyper::client::HttpConnector>>;
 
 pub async fn send_request(
     client: &HttpsClient,
     config: &DslConfig,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<StatusCode, Box<dyn std::error::Error + Send + Sync>> {
     let mut url = Url::parse(&config.target)?;
 
     if let Some(params) = &config.query_params {
@@ -77,21 +76,20 @@ pub async fn send_request(
     let request = req_builder.body(body)?;
 
     let start = Instant::now();
-
     let result = client.request(request).await;
-
     let duration = start.elapsed();
 
     match result {
         Ok(response) => {
+            let status = response.status();
             println!(
                 "{} {} {} {}",
                 "status :".green().bold(),
-                response.status().as_u16().to_string().bold(),
+                status.as_u16().to_string().bold(),
                 "| duration :".blue().bold(),
                 format!("{}ms", duration.as_millis()).bold(),
             );
-            Ok(())
+            Ok(status) 
         }
         Err(e) => {
             let error_reason = if e.is_connect() {
@@ -111,7 +109,8 @@ pub async fn send_request(
                 "| duration :".blue().bold(),
                 format!("{}ms", duration.as_millis()).bold(),
             );
-            Err(Box::new(e))
+
+            Err(Box::new(e)) 
         }
     }
 }

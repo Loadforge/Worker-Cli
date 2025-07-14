@@ -17,7 +17,7 @@
   "auth": {
     "type": "Bearer",
     "credentials": {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGI0NjU1OS1kYTVkLTQzNjAtOGFhMS0wY2UyOTU1M2E5MzUiLCJ1c2VybmFtZSI6ImplYW4ubGltYSIsImlhdCI6MTc1MTQxMTQyOCwiZXhwIjoxNzUxNzcxNDI4fQ.XNVJqll7dckIIGBHo7B1pHiTv5d2bKXyPGJKONzea0c"
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGI0NjU1OS1kYTVkLTQzNjAtOGFhMS0wY2UyOTU1M2E5MzUiLCJ1c2VybmFtZSI6ImplYW4ubGltYSIsImlhdCI6MTc1MjAyNjIzNywiZXhwIjoxNzUyMzg2MjM3fQ.p3hy2lI4zqB6tN3eJwrH7kkuuYaPCux8i3wkuUxC8A4"
     }
   }
 }

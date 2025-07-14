@@ -5,6 +5,9 @@ use crate::models::dsl_model::{DslConfig, Body, Auth, HttpMethod};
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine;
 use url::Url;
+use std::time::Instant;
+
+use colored::*; 
 
 pub type HttpsClient = Client<HttpsConnector<hyper::client::HttpConnector>>;
 
@@ -41,7 +44,7 @@ pub async fn send_request(
 
     let mut req_builder = Request::builder()
         .method(method)
-        .uri(uri);
+        .uri(uri.clone());
 
     if let Some(Body::Json(_)) = &config.body {
         req_builder = req_builder.header(CONTENT_TYPE, "application/json");
@@ -72,8 +75,18 @@ pub async fn send_request(
     }
 
     let request = req_builder.body(body)?;
+
+    let start = Instant::now();
     let response = client.request(request).await?;
-    // println!("Response: {}", response.status());
- 
+    let duration = start.elapsed();
+
+    println!(
+        "{} {} | {} {} ms",
+        "Status:".bold().green(),
+        format!("{}", response.status()).bold(),
+        "Tempo:".bold().blue(),
+        format!("{}", duration.as_millis()).bold()
+    );
+
     Ok(())
 }

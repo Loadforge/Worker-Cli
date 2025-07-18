@@ -1,0 +1,17 @@
+{
+  "name": "Teste Simples",
+  "target": "http://localhost:3000/users",
+  "method": "POST",
+  "concurrency": 1,
+  "duration": 1,
+  "query_params": null,
+  "body": {
+    "type": "Json",
+    "content": {
+      "name": "Jean",
+      "username": "jean.lima",
+      "password": "123456789"
+    }
+  },
+  "auth": null
+}

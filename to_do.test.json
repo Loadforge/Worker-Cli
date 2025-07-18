@@ -2,8 +2,8 @@
   "name": "Teste Simples",
   "target": "http://localhost:3000/task",
   "method": "POST",
-  "concurrency": 6,
-  "duration": 5,
+  "concurrency": 36,
+  "duration": 30,
   "query_params": null,
   "body": {
     "type": "Json",
@@ -17,7 +17,7 @@
   "auth": {
     "type": "Bearer",
     "credentials": {
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJmOGI0NjU1OS1kYTVkLTQzNjAtOGFhMS0wY2UyOTU1M2E5MzUiLCJ1c2VybmFtZSI6ImplYW4ubGltYSIsImlhdCI6MTc1MjAyNjIzNywiZXhwIjoxNzUyMzg2MjM3fQ.p3hy2lI4zqB6tN3eJwrH7kkuuYaPCux8i3wkuUxC8A4"
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4YjRmZTkzMi0yZDg2LTQ1NjYtOTY3My1iZDNjMTI5M2RjOWIiLCJ1c2VybmFtZSI6ImplYW4ubGltYSIsImlhdCI6MTc1Mjg2MDA1MSwiZXhwIjoxNzUzMjIwMDUxfQ.jg_joAJbHnMg8R2dSzbqa0e08xC9Kq11s-pCB7sRU5w"
     }
   }
 }

@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::time::Instant;
 use tokio::task;
+use tokio::time::{timeout, sleep};
 use hyper_tls::HttpsConnector;
 use hyper::Client;
 use chrono::Local;
@@ -25,22 +26,26 @@ pub async fn run_load_test(config: DslConfig) {
     }));
 
     let response_times = Arc::new(Mutex::new(Vec::new()));
-
-    let start_time = Instant::now();
     let running = Arc::new(AtomicBool::new(true));
     let mut handles = Vec::new();
+
+    let duration_secs = config.duration;
+    let end_time = Instant::now() + Duration::from_secs(duration_secs);
+    let max_request_duration = Duration::from_secs(3);
 
     for _ in 0..config.concurrency {
         let client = Arc::clone(&client);
         let config = Arc::clone(&config);
         let metrics = Arc::clone(&metrics);
         let response_times = Arc::clone(&response_times);
-        let global_start = start_time.clone();
+        let running = Arc::clone(&running);
 
         let handle = task::spawn(async move {
-            while global_start.elapsed().as_secs() < config.duration {
+            while running.load(Ordering::Relaxed) && Instant::now() < end_time {
                 let request_start = Instant::now();
-                let result = send_request(&client, &config).await;
+
+                let result = timeout(max_request_duration, send_request(&client, &config)).await;
+
                 let elapsed = request_start.elapsed().as_secs_f64() * 1000.0;
 
                 {
@@ -53,42 +58,53 @@ pub async fn run_load_test(config: DslConfig) {
                 m.total_duration += elapsed;
 
                 let status_key = match result {
-                    Ok(status) => {
+                    Ok(Ok(status)) => {
                         m.successful_requests += 1;
                         status.as_u16().to_string()
                     }
+                    Ok(Err(_)) => {
+                        m.failed_requests += 1;
+                        "REQUEST_ERROR".to_string()
+                    }
                     Err(_) => {
                         m.failed_requests += 1;
-                        "NETWORK_ERROR".to_string()
+                        "TIMEOUT".to_string()
                     }
                 };
 
-                *m.status_counts.entry(status_key).or_insert(0) += 1;
+                *m.status_counts.entry(status_key.clone()).or_insert(0) += 1;
 
                 if elapsed < m.fastest_response {
                     m.fastest_response = elapsed;
                 }
-
                 if elapsed > m.slowest_response {
                     m.slowest_response = elapsed;
                 }
+
+
             }
+
+
         });
 
         handles.push(handle);
+    }
+
+    sleep(Duration::from_secs(duration_secs)).await;
+
+    for handle in handles.iter() {
+        handle.abort();
     }
 
     for handle in handles {
         let _ = handle.await;
     }
 
-    running.store(false, Ordering::SeqCst);
-
     let mut final_metrics = metrics.lock().unwrap();
     let response_times = response_times.lock().unwrap();
 
     let median = calculate_median(&response_times);
-    let total_time_secs = config.duration as f64;
+    let total_time_secs = duration_secs as f64;
     let throughput = final_metrics.total_requests as f64 / total_time_secs;
 
     final_metrics.target_url = config.target.clone();

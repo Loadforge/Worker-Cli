@@ -2,8 +2,8 @@
   "name": "Teste Simples JSONPlaceholder",
   "target": "https://jsonplaceholder.typicode.com/posts",
   "method": "GET",
-  "concurrency": 6,
-  "duration": 1,
+  "concurrency": 36,
+  "duration": 60,
   "query_params": null,
   "body": null,
   "auth": null

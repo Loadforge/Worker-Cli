@@ -25,14 +25,14 @@ async fn main() {
 
     let (cpu_cores, total_mem_kb, free_mem_kb) = get_hardware_info();
 
-    let min_ram_kb = 500 * 1024; 
-    let ram_per_thread_kb = 50 * 1024; 
+    let min_ram_kb = 500 * 1024;
+    let ram_per_thread_kb = 50 * 1024;
 
     if free_mem_kb < min_ram_kb {
         eprintln!(
-            "\x1b[1;31m[ERRO]\x1b[0m Memória RAM livre insuficiente para rodar o teste.\n\
-             Memória livre detectada: {:.2} MB\n\
-             Memória mínima necessária: 500 MB",
+            "\x1b[1;31m[ERROR]\x1b[0m Insufficient free RAM to run the test.\n\
+             Free memory detected: {:.2} MB\n\
+             Minimum required memory: 500 MB",
             free_mem_kb as f64 / 1024.0
         );
         std::process::exit(1);
@@ -40,7 +40,7 @@ async fn main() {
 
     if config.concurrency > cpu_cores * 3 {
         eprintln!(
-            "\x1b[1;31m[ERRO]\x1b[0m Concurrency ({}) is too high for your CPU cores ({}). Max allowed is {}.",
+            "\x1b[1;31m[ERROR]\x1b[0m Concurrency ({}) is too high for your CPU cores ({}). Max allowed is {}.",
             config.concurrency, cpu_cores, cpu_cores * 3
         );
         std::process::exit(1);
@@ -48,9 +48,9 @@ async fn main() {
 
     if (config.concurrency as u64) * ram_per_thread_kb > free_mem_kb {
         eprintln!(
-            "\x1b[1;31m[ERRO]\x1b[0m Concorrência ({}) muito alta para memória RAM livre.\n\
-             Memória RAM necessária: {:.2} MB\n\
-             Memória RAM livre: {:.2} MB",
+            "\x1b[1;31m[ERROR]\x1b[0m Concurrency ({}) is too high for available RAM.\n\
+             Required RAM: {:.2} MB\n\
+             Free RAM: {:.2} MB",
             config.concurrency,
             (config.concurrency as u64 * ram_per_thread_kb) as f64 / 1024.0,
             free_mem_kb as f64 / 1024.0

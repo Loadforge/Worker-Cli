@@ -1,10 +1,12 @@
 use clap::Parser;
+
 mod models;
 mod client;
 mod executor;
+pub mod utils;
+
 use models::dsl_model::DslConfig;
 use executor::run_load_test;
-pub mod utils;
 use utils::hardware::get_hardware_info;
 
 #[derive(Parser)]
@@ -38,7 +40,7 @@ async fn main() {
         std::process::exit(1);
     }
 
-    if config.concurrency > cpu_cores * 3 {
+    if config.concurrency > cpu_cores * 300 {
         eprintln!(
             "\x1b[1;31m[ERROR]\x1b[0m Concurrency ({}) is too high for your CPU cores ({}). Max allowed is {}.",
             config.concurrency, cpu_cores, cpu_cores * 3
@@ -63,6 +65,12 @@ async fn main() {
     println!("\x1b[1;93m🔧 Method       :\x1b[0m {:?}", config.method);
     println!("\x1b[1;92m👥 Concurrency  :\x1b[0m {}", config.concurrency);
     println!("\x1b[1;96m⏱️  Duration    :\x1b[0m {} seconds", config.duration);
+
+    if let Some(timeout) = config.timeout {
+        println!("\x1b[1;90m🕒 Timeout per request: \x1b[0m{} ms", timeout);
+    } else {
+        println!("\x1b[1;90m🕒 Timeout per request: \x1b[0m(default not set)");
+    }
 
     if let Some(ref auth) = config.auth {
         println!("\x1b[1;95m🔐 Authentication :\x1b[0m {:?}", auth);

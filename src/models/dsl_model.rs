@@ -10,6 +10,9 @@ pub struct DslConfig {
     pub duration: u64,
 
     #[serde(default)]
+    pub timeout: Option<u64>,
+
+    #[serde(default)]
     pub body: Option<Body>,
 
     #[serde(default)]

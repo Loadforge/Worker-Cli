@@ -6,5 +6,6 @@
   "duration": 3,
   "query_params": null,
   "body": null,
-  "auth": null
+  "auth": null,
+  "timeout": 5000
 }

@@ -7,6 +7,7 @@ use tokio::time::{timeout, sleep};
 use hyper_tls::HttpsConnector;
 use hyper::Client;
 use chrono::Local;
+use colored::*;
 
 use crate::client::{send_request, HttpsClient};
 use crate::models::dsl_model::DslConfig;
@@ -31,7 +32,7 @@ pub async fn run_load_test(config: DslConfig) {
 
     let duration_secs = config.duration;
     let end_time = Instant::now() + Duration::from_secs(duration_secs);
-    let max_request_duration = Duration::from_secs(3);
+    let max_request_duration = Duration::from_millis(config.timeout.unwrap_or(5000));
 
     for _ in 0..config.concurrency {
         let client = Arc::clone(&client);
@@ -58,19 +59,40 @@ pub async fn run_load_test(config: DslConfig) {
                 m.total_duration += elapsed;
 
                 let status_key = match result {
-                    Ok(Ok(status)) => {
-                        m.successful_requests += 1;
-                        status.as_u16().to_string()
-                    }
-                    Ok(Err(_)) => {
-                        m.failed_requests += 1;
-                        "REQUEST_ERROR".to_string()
-                    }
-                    Err(_) => {
-                        m.failed_requests += 1;
-                        "TIMEOUT".to_string()
-                    }
-                };
+                Ok(Ok(status)) => {
+                    m.successful_requests += 1;
+                    println!(
+                        "{} {} {} {}",
+                        "status :".green().bold(),
+                        status.as_u16().to_string().bold(),
+                        "| duration :".blue().bold(),
+                        format!("{:.0}ms", elapsed).bold()
+                    );
+                    status.as_u16().to_string()
+                }
+                Ok(Err(_)) => {
+                    m.failed_requests += 1;
+                    eprintln!(
+                        "{} {} {} {}",
+                        "status :".red().bold(),
+                        "REQUEST_ERROR".red().bold(),
+                        "| duration :".blue().bold(),
+                        format!("{:.0}ms", elapsed).bold()
+                    );
+                    "REQUEST_ERROR".to_string()
+                }
+                Err(_) => {
+                    m.failed_requests += 1;
+                    eprintln!(
+                        "{} {} {} {}",
+                        "status :".red().bold(),
+                        "Network Error (Timeout)".red().bold(),
+                        "| duration :".blue().bold(),
+                        format!("{:.0}ms", elapsed).bold()
+                    );
+                    "TIMEOUT".to_string()
+                }
+            };
 
                 *m.status_counts.entry(status_key.clone()).or_insert(0) += 1;
 

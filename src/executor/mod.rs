@@ -139,6 +139,10 @@ pub async fn run_load_test(config: DslConfig) {
 
     println!();
     println!("\x1b[1;97;44m🔥 ======== TEST RESULTS ======== 🔥\x1b[0m");
+    println!("\x1b[1;94m🌐 Target URL               : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.target_url);
+    println!("\x1b[1;94m🔁 HTTP Method              : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.http_method);
+    println!("\x1b[1;94m📅 Duration (s)             : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.duration_secs);
+    println!("\x1b[1;94m👥 Concurrency              : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.concurrency);
     println!("\x1b[1;94m⏰ Timestamp                : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.timestamp);
     println!("\x1b[1;92m✅ Total requests           : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.total_requests);
     println!("\x1b[1;92m✅ Successful requests      : \x1b[0m\x1b[1;97m{}\x1b[0m", final_metrics.successful_requests);
@@ -148,10 +152,11 @@ pub async fn run_load_test(config: DslConfig) {
     println!("\x1b[1;95m📊 Median response time (ms): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.median_response_time);
     println!("\x1b[1;94m📈 Requests per second (RPS): \x1b[0m\x1b[1;97m{:.2}\x1b[0m", final_metrics.throughput);
 
+
     println!();
     println!("\x1b[1;97;44m📦 ======== STATUS BREAKDOWN ========\x1b[0m");
     for (status, count) in &final_metrics.status_counts {
-        println!("\x1b[1;97m• {}: {}\x1b[0m", status, count);
+        println!("\x1b[1;97mCode {}: {}\x1b[0m", status, count);
     }
 }
 

@@ -2,10 +2,10 @@
   "name": "Teste Chuck Norris",
   "target": "https://api.chucknorris.io/jokes/random",
   "method": "GET",
-  "concurrency": 1,
-  "duration": 3,
+  "concurrency": 3600,
+  "duration": 30,
   "query_params": null,
   "body": null,
   "auth": null,
-  "timeout": 5000
+  "headers": null
 }

@@ -4,7 +4,6 @@
   "method": "GET",
   "concurrency": 36,
   "duration": 60,
-  "timeout": 500,
   "query_params": null,
   "body": null,
   "auth": null

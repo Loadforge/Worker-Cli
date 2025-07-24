@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant};
 
 use tokio::task;
-use tokio::time::{timeout, sleep};
+use tokio::time::sleep;
 use hyper_tls::HttpsConnector;
 use hyper::Client;
 use chrono::Local;
@@ -33,7 +33,6 @@ pub async fn run_load_test(config: DslConfig) {
 
     let duration_secs = config.duration;
     let end_time = Instant::now() + Duration::from_secs(duration_secs);
-    let max_request_duration = Duration::from_millis(config.timeout.unwrap_or(5000));
 
     for _ in 0..config.concurrency {
         let client = Arc::clone(&client);
@@ -44,10 +43,10 @@ pub async fn run_load_test(config: DslConfig) {
 
         let handle = task::spawn(async move {
             while running.load(Ordering::Relaxed) && Instant::now() < end_time {
-                let result = timeout(max_request_duration, send_request(&client, &config)).await;
+                let result = send_request(&client, &config).await;
 
                 match result {
-                    Ok(Ok((status, duration))) => {
+                    Ok((status, duration)) => {
                         let elapsed = duration as f64;
 
                         {
@@ -78,7 +77,7 @@ pub async fn run_load_test(config: DslConfig) {
                             m.slowest_response = elapsed;
                         }
                     }
-                    Ok(Err((err_msg, duration))) => {
+                    Err((err_msg, duration)) => {
                         let elapsed = duration as f64;
 
                         {
@@ -100,36 +99,6 @@ pub async fn run_load_test(config: DslConfig) {
                         );
 
                         *m.status_counts.entry("REQUEST_ERROR".to_string()).or_insert(0) += 1;
-
-                        if elapsed < m.fastest_response {
-                            m.fastest_response = elapsed;
-                        }
-                        if elapsed > m.slowest_response {
-                            m.slowest_response = elapsed;
-                        }
-                    }
-                    Err(_) => {
-                        let elapsed = max_request_duration.as_millis() as f64;
-
-                        {
-                            let mut rt = response_times.lock().unwrap();
-                            rt.push(elapsed);
-                        }
-
-                        let mut m = metrics.lock().unwrap();
-                        m.total_requests += 1;
-                        m.failed_requests += 1;
-                        m.total_duration += elapsed;
-
-                        eprintln!(
-                            "{} {} {} {}",
-                            "status :".red().bold(),
-                            "Network Error (Timeout)".red().bold(),
-                            "| duration :".blue().bold(),
-                            format!("{:.0}ms", elapsed).bold()
-                        );
-
-                        *m.status_counts.entry("TIMEOUT".to_string()).or_insert(0) += 1;
 
                         if elapsed < m.fastest_response {
                             m.fastest_response = elapsed;

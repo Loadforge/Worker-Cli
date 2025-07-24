@@ -10,9 +10,6 @@ pub struct DslConfig {
     pub duration: u64,
 
     #[serde(default)]
-    pub timeout: Option<u64>,
-
-    #[serde(default)]
     pub body: Option<Body>,
 
     #[serde(default)]
@@ -20,6 +17,9 @@ pub struct DslConfig {
 
     #[serde(default)]
     pub query_params: Option<HashMap<String, String>>,
+
+    #[serde(default)]
+    pub headers: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -47,5 +47,5 @@ pub enum Auth {
     None,
     Basic { username: String, password: String },
     Bearer { token: String },
-    ApiKey { key_name: String, key_value: String, in_header: bool },
+    ApiKey { key_name: String, key_value: String, add_to: String },
 }

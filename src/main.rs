@@ -40,7 +40,7 @@ async fn main() {
         std::process::exit(1);
     }
 
-    if config.concurrency > cpu_cores * 300 {
+    if config.concurrency > cpu_cores * 3 {
         eprintln!(
             "\x1b[1;31m[ERROR]\x1b[0m Concurrency ({}) is too high for your CPU cores ({}). Max allowed is {}.",
             config.concurrency, cpu_cores, cpu_cores * 3
@@ -66,11 +66,6 @@ async fn main() {
     println!("\x1b[1;92m👥 Concurrency  :\x1b[0m {}", config.concurrency);
     println!("\x1b[1;96m⏱️  Duration    :\x1b[0m {} seconds", config.duration);
 
-    if let Some(timeout) = config.timeout {
-        println!("\x1b[1;90m🕒 Timeout per request: \x1b[0m{} ms", timeout);
-    } else {
-        println!("\x1b[1;90m🕒 Timeout per request: \x1b[0m(default not set)");
-    }
 
     if let Some(ref auth) = config.auth {
         println!("\x1b[1;95m🔐 Authentication :\x1b[0m {:?}", auth);
@@ -82,6 +77,10 @@ async fn main() {
 
     if let Some(ref params) = config.query_params {
         println!("\x1b[1;90m🔎 Query Params    :\x1b[0m {:?}", params);
+    }
+
+    if let Some(ref headers) = config.headers {
+        println!("\x1b[1;90m🗂️  Headers         :\x1b[0m {:?}", headers);
     }
 
     println!(

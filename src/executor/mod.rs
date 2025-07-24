@@ -1,7 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{Duration, Instant};
+
 use tokio::task;
 use tokio::time::{timeout, sleep};
 use hyper_tls::HttpsConnector;
@@ -43,81 +44,111 @@ pub async fn run_load_test(config: DslConfig) {
 
         let handle = task::spawn(async move {
             while running.load(Ordering::Relaxed) && Instant::now() < end_time {
-                let request_start = Instant::now();
-
                 let result = timeout(max_request_duration, send_request(&client, &config)).await;
 
-                let elapsed = request_start.elapsed().as_secs_f64() * 1000.0;
+                match result {
+                    Ok(Ok((status, duration))) => {
+                        let elapsed = duration as f64;
 
-                {
-                    let mut rt = response_times.lock().unwrap();
-                    rt.push(elapsed);
+                        {
+                            let mut rt = response_times.lock().unwrap();
+                            rt.push(elapsed);
+                        }
+
+                        let mut m = metrics.lock().unwrap();
+                        m.total_requests += 1;
+                        m.successful_requests += 1;
+                        m.total_duration += elapsed;
+
+                        println!(
+                            "{} {} {} {}",
+                            "status :".green().bold(),
+                            status.as_u16().to_string().bold(),
+                            "| duration :".blue().bold(),
+                            format!("{:.0}ms", elapsed).bold()
+                        );
+
+                        let key = status.as_u16().to_string();
+                        *m.status_counts.entry(key).or_insert(0) += 1;
+
+                        if elapsed < m.fastest_response {
+                            m.fastest_response = elapsed;
+                        }
+                        if elapsed > m.slowest_response {
+                            m.slowest_response = elapsed;
+                        }
+                    }
+                    Ok(Err((err_msg, duration))) => {
+                        let elapsed = duration as f64;
+
+                        {
+                            let mut rt = response_times.lock().unwrap();
+                            rt.push(elapsed);
+                        }
+
+                        let mut m = metrics.lock().unwrap();
+                        m.total_requests += 1;
+                        m.failed_requests += 1;
+                        m.total_duration += elapsed;
+
+                        eprintln!(
+                            "{} {} {} {}",
+                            "status :".red().bold(),
+                            err_msg.red().bold(),
+                            "| duration :".blue().bold(),
+                            format!("{:.0}ms", elapsed).bold()
+                        );
+
+                        *m.status_counts.entry("REQUEST_ERROR".to_string()).or_insert(0) += 1;
+
+                        if elapsed < m.fastest_response {
+                            m.fastest_response = elapsed;
+                        }
+                        if elapsed > m.slowest_response {
+                            m.slowest_response = elapsed;
+                        }
+                    }
+                    Err(_) => {
+                        let elapsed = max_request_duration.as_millis() as f64;
+
+                        {
+                            let mut rt = response_times.lock().unwrap();
+                            rt.push(elapsed);
+                        }
+
+                        let mut m = metrics.lock().unwrap();
+                        m.total_requests += 1;
+                        m.failed_requests += 1;
+                        m.total_duration += elapsed;
+
+                        eprintln!(
+                            "{} {} {} {}",
+                            "status :".red().bold(),
+                            "Network Error (Timeout)".red().bold(),
+                            "| duration :".blue().bold(),
+                            format!("{:.0}ms", elapsed).bold()
+                        );
+
+                        *m.status_counts.entry("TIMEOUT".to_string()).or_insert(0) += 1;
+
+                        if elapsed < m.fastest_response {
+                            m.fastest_response = elapsed;
+                        }
+                        if elapsed > m.slowest_response {
+                            m.slowest_response = elapsed;
+                        }
+                    }
                 }
-
-                let mut m = metrics.lock().unwrap();
-                m.total_requests += 1;
-                m.total_duration += elapsed;
-
-                let status_key = match result {
-                Ok(Ok(status)) => {
-                    m.successful_requests += 1;
-                    println!(
-                        "{} {} {} {}",
-                        "status :".green().bold(),
-                        status.as_u16().to_string().bold(),
-                        "| duration :".blue().bold(),
-                        format!("{:.0}ms", elapsed).bold()
-                    );
-                    status.as_u16().to_string()
-                }
-                Ok(Err(_)) => {
-                    m.failed_requests += 1;
-                    eprintln!(
-                        "{} {} {} {}",
-                        "status :".red().bold(),
-                        "REQUEST_ERROR".red().bold(),
-                        "| duration :".blue().bold(),
-                        format!("{:.0}ms", elapsed).bold()
-                    );
-                    "REQUEST_ERROR".to_string()
-                }
-                Err(_) => {
-                    m.failed_requests += 1;
-                    eprintln!(
-                        "{} {} {} {}",
-                        "status :".red().bold(),
-                        "Network Error (Timeout)".red().bold(),
-                        "| duration :".blue().bold(),
-                        format!("{:.0}ms", elapsed).bold()
-                    );
-                    "TIMEOUT".to_string()
-                }
-            };
-
-                *m.status_counts.entry(status_key.clone()).or_insert(0) += 1;
-
-                if elapsed < m.fastest_response {
-                    m.fastest_response = elapsed;
-                }
-                if elapsed > m.slowest_response {
-                    m.slowest_response = elapsed;
-                }
-
-
             }
-
-
         });
 
         handles.push(handle);
     }
 
     sleep(Duration::from_secs(duration_secs)).await;
-
     for handle in handles.iter() {
         handle.abort();
     }
-
     for handle in handles {
         let _ = handle.await;
     }

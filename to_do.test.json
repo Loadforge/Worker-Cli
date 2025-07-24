@@ -2,7 +2,7 @@
   "name": "Teste Simples",
   "target": "http://localhost:3000/task",
   "method": "POST",
-  "concurrency": 360000,
+  "concurrency": 36,
   "duration": 30,
   "timeout":10,
   "query_params": null,

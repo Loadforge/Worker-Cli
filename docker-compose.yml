@@ -1,0 +1,7 @@
+version: '3.8'
+services:
+  worker-cli:
+    build: .
+    volumes:
+      - ./chuck.norris.test.json:/app/chuck.norris.test.json
+    command: ["./Worker-Cli", "--config", "chuck.norris.test.json"]
